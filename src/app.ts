@@ -9,7 +9,7 @@ import listRoutes from "./routes/list.routes";
 import cardRoutes from "./routes/card.routes";
 import commentRoutes from "./routes/comment.routes";
 import attachmentRoutes from "./routes/attachment.routes";
-
+import userRoutes from "./routes/user.routes";
 
 dotenv.config();
 
@@ -22,6 +22,7 @@ app.use(express.json());
 app.use(passport.initialize());
 app.use("/auth", authRoutes);
 app.use("/api/auth", googleAuthRoutes);
+app.use("/api/user", userRoutes);
 app.use("/api/boards", boardRoutes);
 app.use("/api", listRoutes);
 app.use("/api", cardRoutes);
