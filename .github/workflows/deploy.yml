@@ -3,19 +3,46 @@ name: Deploy Backend
 on:
   push:
     branches:
-      - main
+      - main  # triggers on push to main branch
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy to EC2
+      # 1️⃣ Checkout repo (optional if you want to sync code locally first)
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      # 2️⃣ SSH into EC2 and deploy Docker container
+      - name: Deploy Dockerized app to EC2
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
+          envs:
+            DATABASE_URL: ${{ secrets.DATABASE_URL }}
           script: |
+            # Navigate to project folder
             cd ~/Tasqerra-BE
-            ./deploy.sh
+
+            # Pull latest code from GitHub
+            git pull origin main
+
+            # Build Docker image
+            docker build -t tasqerra-app .
+
+            # Stop old container if it exists
+            docker stop tasqerra-container || true
+            docker rm tasqerra-container || true
+
+            # Run new container
+            docker run -d -p 80:5000 \
+              --name tasqerra-container \
+              --restart unless-stopped \
+              -e DATABASE_URL="${DATABASE_URL}" \
+              tasqerra-app
+
+            # Show running container status
+            docker ps -f name=tasqerra-container
